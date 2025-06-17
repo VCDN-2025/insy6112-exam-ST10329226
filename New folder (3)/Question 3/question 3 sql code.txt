@@ -1,0 +1,146 @@
+-- Q.3.1 Write an SQL statement to create the Student table.
+CREATE TABLE Student (
+    StudentID INT PRIMARY KEY,
+    StudentName VARCHAR(255) NOT NULL,
+    StudentSurname VARCHAR(255) NOT NULL,
+    StudentNumber INT NOT NULL
+);
+
+-- Q.3.2 Write an SQL statement to create the Lecturer table.
+CREATE TABLE Lecturer (
+    LecturerID INT PRIMARY KEY,
+    LecturerName VARCHAR(255) NOT NULL,
+    LecturerSurname VARCHAR(255) NOT NULL
+);
+
+-- Q.3.3 Write an SQL statement to create the Tutorial table.
+CREATE TABLE Tutorial (
+    TutorialID INT PRIMARY KEY,
+    StudentID INT NOT NULL,
+    LecturerID INT NOT NULL,
+    TutorialDate DATE NOT NULL,
+    TutorialTime TIME NOT NULL,
+    TutorialDuration INT, -- Duration in minutes
+    FOREIGN KEY (StudentID) REFERENCES Student(StudentID),
+    FOREIGN KEY (LecturerID) REFERENCES Lecturer(LecturerID)
+);
+
+-- Q.3.4 Write SQL statements to insert the following data:
+
+-- Insert data into Student table
+INSERT INTO Student (StudentID, StudentName, StudentSurname, StudentNumber) VALUES
+(1, 'Debbie', 'Theart', 123456),
+(2, 'Thomas', 'Duncan', 654321);
+
+-- Insert data into Lecturer table
+INSERT INTO Lecturer (LecturerID, LecturerName, LecturerSurname) VALUES
+(1, 'Zintle', 'Nukani'),
+(2, 'Ravi', 'Maharaj');
+
+-- Insert data into Tutorial table
+INSERT INTO Tutorial (TutorialID, TutorialDate, TutorialTime, TutorialDuration, LecturerID, StudentID) VALUES
+(1, '2025-01-15', '09:00:00', 180, 2, 1),
+(2, '2025-01-18', '15:00:00', 240, 2, 2),
+(3, '2025-01-20', '10:00:00', 180, 1, 1),
+(4, '2025-01-21', '11:00:00', 180, 2, 1);
+
+
+-- Q.3.5 Write an SQL statement to display all the tutorials between 2025-01-16 and 2025-01-20 (inclusive).
+SELECT *
+FROM Tutorial
+WHERE TutorialDate BETWEEN '2025-01-16' AND '2025-01-20';
+
+
+-- Q.3.6 Write a SQL statement to display the names and surnames of students with the
+-- total number of tutorials they have booked. Sort the results in descending order
+-- based on the number of tutorials.
+SELECT
+    S.StudentName,
+    S.StudentSurname,
+    COUNT(T.TutorialID) AS TotalTutorials
+FROM
+    Student AS S
+JOIN
+    Tutorial AS T ON S.StudentID = T.StudentID
+GROUP BY
+    S.StudentID, S.StudentName, S.StudentSurname
+ORDER BY
+    TotalTutorials DESC; -- Corrected: Sorted by TotalTutorials in DESC order
+
+
+-- Q.3.7 Write an SQL statement to display all the tutorials. The statement should
+-- display the tutorial date (in descending order), the time, the lecturer's
+-- name and surname, and the student's name and surname.
+-- This was a SELECT statement, but the original comment for Q.3.7 seemed to describe a view.
+-- I'm retaining the SELECT statement here as it aligns with the initial code for Q.3.7,
+-- and Q.3.8 is already defined as a view for students with LecturerID 2.
+SELECT
+    T.TutorialDate,
+    T.TutorialTime,
+    L.LecturerName,
+    L.LecturerSurname,
+    S.StudentName,
+    S.StudentSurname
+FROM
+    Tutorial AS T
+JOIN
+    Lecturer AS L ON T.LecturerID = L.LecturerID
+JOIN
+    Student AS S ON T.StudentID = S.StudentID
+ORDER BY
+    T.TutorialDate DESC, T.TutorialTime ASC;
+
+
+-- Q.3.7 Create a view that gets a list of all the students that have tutorials with
+-- the lecturer with Lecturer ID 2. Include just the name and surname of the students
+-- in the result and sort results in ascending alphabetical order according to
+-- surname.
+CREATE VIEW StudentsWithLecturer2 AS
+SELECT DISTINCT
+    S.StudentName,
+    S.StudentSurname
+FROM
+    Student AS S
+JOIN
+    Tutorial AS T ON S.StudentID = T.StudentID
+WHERE
+    T.LecturerID = 2
+ORDER BY
+    S.StudentSurname ASC;
+
+-- To view the content of the view:
+-- SELECT * FROM StudentsWithLecturer2;
+
+
+-- Q.3.7 Create a stored procedure called get_tutorials. It should take the date of
+-- a tutorial as input and display all the tutorial details for that date.
+-- Display the time (in ascending order), duration, lecturer name and surname, as
+-- well as student name and surname.
+
+DELIMITER //
+
+CREATE PROCEDURE get_tutorials(IN tutorial_date DATE)
+BEGIN
+    SELECT
+        T.TutorialTime,
+        T.TutorialDuration,
+        L.LecturerName,
+        L.LecturerSurname,
+        S.StudentName,
+        S.StudentSurname
+    FROM
+        Tutorial AS T
+    JOIN
+        Lecturer AS L ON T.LecturerID = L.LecturerID
+    JOIN
+        Student AS S ON T.StudentID = S.StudentID
+    WHERE
+        T.TutorialDate = tutorial_date
+    ORDER BY
+        T.TutorialTime ASC;
+END //
+
+DELIMITER ;
+
+-- To call the stored procedure to get tutorials for a specific date:
+-- CALL get_tutorials('2025-01-20');
